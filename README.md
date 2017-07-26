@@ -1,23 +1,25 @@
 ## OpenCV C++ Stereo Camera Calibration
 
 This repository contains some sources to calibrate the intrinsics of individual cameras and also the extrinsics of a stereo pair.
+_This is a fork of [sourishg/stereo-calibration](https://github.com/sourishg/stereo-calibration), aimed at Windows compatibility.  Popt lib command line argument parser dependency is replaced by the included [cxxopts](https://github.com/jarro2783/cxxopts) header-only library_
 
 ### Dependencies
 
 - OpenCV
-- popt
+- ~~popt~~ _removed, in favor of cxxopts (included, header-only)_
 
 ### Compilation
 
-Compile all the files using the following commands.
+Compile all the files using the following commands.  
+_Requires cmake_
 
 ```bash
 mkdir build && cd build
 cmake ..
-make
+make # (or open build/CALIB_CAM.sln in Visual Studio and build there)
 ```
 
-Make sure your are in the `build` folder to run the executables.
+Make sure you are in the `build` folder to run the executables.
 
 ### Get images from webcams
 
