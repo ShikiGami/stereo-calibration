@@ -149,7 +149,9 @@ int main(int argc, char *argv[])
   printf("Starting Rectification\n");
 
   cv::Mat R1, R2, P1, P2, Q;
-  stereoRectify(K1, D1, K2, D2, img1.size(), R, T, R1, R2, P1, P2, Q);
+  //flag = CV_CALIB_ZERO_DISPARITY;
+  flag = 0; double alpha = -1;
+  stereoRectify(K1, D1, K2, D2, img1.size(), R, T, R1, R2, P1, P2, Q, flag, alpha);
 
   fs1 << "R1" << R1;
   fs1 << "R2" << R2;
