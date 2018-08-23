@@ -99,13 +99,12 @@ int main(int argc, char *argv[])
 		    ( "h,help", "print help")
 			;
 
-	  options.parse(argc, argv);
-	  if (options.count("help"))
+	  auto result = options.parse(argc, argv);
+	  if (result.count("help"))
 	  {
 	    cout << options.help() << endl;
         exit(0);
 	  }
-	  cxxopts::check_required(options, {"n","u","v","L","R","l","r","o"}); // throws exception if any not present
   }
   catch (const cxxopts::OptionException& e)
   {

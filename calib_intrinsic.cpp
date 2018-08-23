@@ -1,4 +1,4 @@
-#include <opencv2/core/core.hpp>
+﻿#include <opencv2/core/core.hpp>
 #include <opencv2/calib3d/calib3d.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
@@ -98,13 +98,12 @@ int main(int argc, char *argv[])
 		  ("help", "print help")
 		  ;
 
-	  options.parse(argc, argv);
-	  if (options.count("help"))
+	  auto result = options.parse(argc, argv);
+	  if (result.count("help"))
 	  {
 	    cout << options.help() << endl;
         exit(0);
 	  }
-	  cxxopts::check_required(options, {"w","h","n","s","d","i","e","o"}); // throws exception if any not present
   }
   catch (const cxxopts::OptionException& e)
   {

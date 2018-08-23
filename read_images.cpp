@@ -19,7 +19,8 @@ int main(int argc, char *argv[])
 	try {
 		cxxopts::Options options(argv[0], "read images from cameras, save to disk");
 
-		options.add_options()
+		options
+			.add_options()
 			("w,img_width", "image width, e.g. 640", cxxopts::value<int>(im_width), "NUM")
 			("h,img_height", "image height, e.g. 480", cxxopts::value<int>(im_height), "NUM")
 			("d,imgs_directory", "directory to save images, e.g. \"C:/imgs/\"", cxxopts::value<string>(imgs_directory), "STR")
@@ -27,13 +28,12 @@ int main(int argc, char *argv[])
 			("help", "print help")
 			;
 
-		options.parse(argc, argv);
-		if (options.count("help"))
+		auto result = options.parse(argc, argv);
+		if (result.count("help"))
 		{
 		  cout << options.help() << endl;
 		  exit(0);
 		}
-		cxxopts::check_required(options,{"w","h","d","e"});
   }
   catch (const cxxopts::OptionException& e)
   {
