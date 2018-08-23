@@ -4,7 +4,7 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <stdio.h>
 #include <iostream>
-#include "popt_pp.h"
+#include "cxxopts/cxxopts.hpp"
 
 using namespace std;
 using namespace cv;
@@ -18,8 +18,8 @@ Mat img, gray;
 Size im_size;
 
 void setup_calibration(int board_width, int board_height, int num_imgs, 
-                       float square_size, char* imgs_directory, char* imgs_filename,
-                       char* extension) {
+                       float square_size, const char* imgs_directory, const char* imgs_filename,
+                       const char* extension) {
   Size board_size = Size(board_width, board_height);
   int board_n = board_width * board_height;
 
@@ -74,34 +74,46 @@ double computeReprojectionErrors(const vector< vector< Point3f > >& objectPoints
   return std::sqrt(totalErr/totalPoints);
 }
 
-int main(int argc, char const **argv)
+int main(int argc, char *argv[])
 {
   int board_width, board_height, num_imgs;
   float square_size;
-  char* imgs_directory;
-  char* imgs_filename;
-  char* out_file;
-  char* extension;
+  string imgs_directory;
+  string imgs_filename;
+  string extension;  
+  string out_file;
 
-  static struct poptOption options[] = {
-    { "board_width",'w',POPT_ARG_INT,&board_width,0,"Checkerboard width","NUM" },
-    { "board_height",'h',POPT_ARG_INT,&board_height,0,"Checkerboard height","NUM" },
-    { "num_imgs",'n',POPT_ARG_INT,&num_imgs,0,"Number of checkerboard images","NUM" },
-    { "square_size",'s',POPT_ARG_FLOAT,&square_size,0,"Size of checkerboard square","NUM" },
-    { "imgs_directory",'d',POPT_ARG_STRING,&imgs_directory,0,"Directory containing images","STR" },
-    { "imgs_filename",'i',POPT_ARG_STRING,&imgs_filename,0,"Image filename","STR" },
-    { "extension",'e',POPT_ARG_STRING,&extension,0,"Image extension","STR" },
-    { "out_file",'o',POPT_ARG_STRING,&out_file,0,"Output calibration filename (YML)","STR" },
-    POPT_AUTOHELP
-    { NULL, 0, 0, NULL, 0, NULL, NULL }
-  };
+  try {
+	  cxxopts::Options options(argv[0], "calibrate single camera's instrinsic parameters");
 
-  POpt popt(NULL, argc, argv, options, 0);
-  int c;
-  while((c = popt.getNextOpt()) >= 0) {}
+	  options.add_options()
+		  ("w,board_width", "Checkerboard width", cxxopts::value<int>(board_width), "NUM")
+		  ("h,board_height", "Checkerboard height", cxxopts::value<int>(board_height), "NUM")
+		  ("n,num_imgs", "Number of images to process", cxxopts::value<int>(num_imgs), "NUM")
+		  ("s,square_size", "Checkerboard square size (i.e. in mm)", cxxopts::value<float>(square_size), "NUM")
+		  ("d,imgs_directory", "Directory containing images", cxxopts::value<string>(imgs_directory), "STR")
+		  ("i,imgs_filename", "Image filename", cxxopts::value<string>(imgs_filename), "STR")
+		  ("e,extension", "Image extension", cxxopts::value<string>(extension), "STR")
+		  ("o,out_file", "Output calibration filename (YML)", cxxopts::value<string>(out_file), "STR")
+		  ("help", "print help")
+		  ;
+
+	  options.parse(argc, argv);
+	  if (options.count("help"))
+	  {
+	    cout << options.help() << endl;
+        exit(0);
+	  }
+	  cxxopts::check_required(options, {"w","h","n","s","d","i","e","o"}); // throws exception if any not present
+  }
+  catch (const cxxopts::OptionException& e)
+  {
+    std::cout << "error parsing options: " << e.what() << std::endl;
+    exit(1);
+  }
 
   setup_calibration(board_width, board_height, num_imgs, square_size,
-                   imgs_directory, imgs_filename, extension);
+                   imgs_directory.c_str(), imgs_filename.c_str(), extension.c_str());
 
   printf("Starting Calibration\n");
   Mat K;

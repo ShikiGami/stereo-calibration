@@ -4,32 +4,43 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <stdio.h>
 #include <iostream>
-#include "popt_pp.h"
+#include "cxxopts\cxxopts.hpp"
 
 using namespace std;
 using namespace cv;
 
-int main(int argc, char const *argv[])
+int main(int argc, char *argv[])
 {
-  char* leftimg_filename;
-  char* rightimg_filename;
-  char* calib_file;
-  char* leftout_filename;
-  char* rightout_filename;
+  string leftimg_filename;
+  string rightimg_filename;
+  string calib_file;
+  string leftout_filename;
+  string rightout_filename;
 
-  static struct poptOption options[] = {
-    { "leftimg_filename",'l',POPT_ARG_STRING,&leftimg_filename,0,"Left imgage path","STR" },
-    { "rightimg_filename",'r',POPT_ARG_STRING,&rightimg_filename,0,"Right image path","STR" },
-    { "calib_file",'c',POPT_ARG_STRING,&calib_file,0,"Stereo calibration file","STR" },
-    { "leftout_filename",'L',POPT_ARG_STRING,&leftout_filename,0,"Left undistorted imgage path","STR" },
-    { "rightout_filename",'R',POPT_ARG_STRING,&rightout_filename,0,"Right undistorted image path","STR" },
-    POPT_AUTOHELP
-    { NULL, 0, 0, NULL, 0, NULL, NULL }
-  };
+  try {
+	  cxxopts::Options options(argv[0], "calibrate stereo cameras");
+	  options.add_options()
+			( "l,leftimg_filename","Left image path",cxxopts::value<string>(leftimg_filename),"STR" )
+			( "r,rightimg_filename","Right image path",cxxopts::value<string>(rightimg_filename),"STR" )
+			( "c,calib_file","Stereo calibration file",cxxopts::value<string>(calib_file),"STR" )
+			( "L,leftout_filename","Left undistorted image path",cxxopts::value<string>(leftout_filename),"STR" )
+			( "R,rightout_filename","Right undistorted image path",cxxopts::value<string>(rightout_filename),"STR" )
+		    ( "h,help", "print help")
+			;
 
-  POpt popt(NULL, argc, argv, options, 0);
-  int c;
-  while((c = popt.getNextOpt()) >= 0) {}
+	  options.parse(argc, argv);
+	  if (options.count("help"))
+	  {
+	    cout << options.help() << endl;
+        exit(0);
+	  }
+	  cxxopts::check_required(options, {"l","r","c","L","R"}); // throws exception if any not present
+  }
+  catch (const cxxopts::OptionException& e)
+  {
+    std::cout << "error parsing options: " << e.what() << std::endl;
+    exit(1);
+  }
 
   Mat R1, R2, P1, P2, Q;
   Mat K1, K2, R;

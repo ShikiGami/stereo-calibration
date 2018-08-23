@@ -4,7 +4,7 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <stdio.h>
 #include <iostream>
-#include "popt_pp.h"
+#include "cxxopts/cxxopts.hpp"
 
 using namespace std;
 using namespace cv;
@@ -17,7 +17,7 @@ vector< vector< Point2f > > left_img_points, right_img_points;
 Mat img1, img2, gray1, gray2;
 
 void load_image_points(int board_width, int board_height, int num_imgs, float square_size,
-                      char* leftimg_dir, char* rightimg_dir, char* leftimg_filename, char* rightimg_filename) {
+                      const char* leftimg_dir, const char* rightimg_dir, const char* leftimg_filename, const char* rightimg_filename) {
 
   Size board_size = Size(board_width, board_height);
   int board_n = board_width * board_height;
@@ -74,39 +74,50 @@ void load_image_points(int board_width, int board_height, int num_imgs, float sq
   }
 }
 
-int main(int argc, char const *argv[])
+int main(int argc, char *argv[])
 {
-  char* leftcalib_file;
-  char* rightcalib_file;
-  char* leftimg_dir;
-  char* rightimg_dir;
-  char* leftimg_filename;
-  char* rightimg_filename;
-  char* out_file;
+  string leftcalib_file;
+  string rightcalib_file;
+  string leftimg_dir;
+  string rightimg_dir;
+  string leftimg_filename;
+  string rightimg_filename;
+  string out_file;
   int num_imgs;
 
-  static struct poptOption options[] = {
-    { "num_imgs",'n',POPT_ARG_INT,&num_imgs,0,"Number of checkerboard images","NUM" },
-    { "leftcalib_file",'u',POPT_ARG_STRING,&leftcalib_file,0,"Left camera calibration","STR" },
-    { "rightcalib_file",'v',POPT_ARG_STRING,&rightcalib_file,0,"Right camera calibration","STR" },
-    { "leftimg_dir",'L',POPT_ARG_STRING,&leftimg_dir,0,"Directory containing left images","STR" },
-    { "rightimg_dir",'R',POPT_ARG_STRING,&rightimg_dir,0,"Directory containing right images","STR" },
-    { "leftimg_filename",'l',POPT_ARG_STRING,&leftimg_filename,0,"Left image prefix","STR" },
-    { "rightimg_filename",'r',POPT_ARG_STRING,&rightimg_filename,0,"Right image prefix","STR" },
-    { "out_file",'o',POPT_ARG_STRING,&out_file,0,"Output calibration filename (YML)","STR" },
-    POPT_AUTOHELP
-    { NULL, 0, 0, NULL, 0, NULL, NULL }
-  };
+  try {
+	  cxxopts::Options options(argv[0], "calibrate stereo cameras");
+	  options.add_options()
+			( "n,num_imgs","Number of checkerboard images to process", cxxopts::value<int>(num_imgs),"NUM" )
+			( "u,leftcalib_file","Left camera calibration",cxxopts::value<string>(leftcalib_file),"STR" )
+			( "v,rightcalib_file","Right camera calibration",cxxopts::value<string>(rightcalib_file),"STR" )
+			( "L,leftimg_dir","Directory containing left images",cxxopts::value<string>(leftimg_dir),"STR" )
+			( "R,rightimg_dir","Directory containing right images",cxxopts::value<string>(rightimg_dir),"STR" )
+			( "l,leftimg_filename","Left image prefix",cxxopts::value<string>(leftimg_filename),"STR" )
+			( "r,rightimg_filename","Right image prefix",cxxopts::value<string>(rightimg_filename),"STR" )
+			( "o,out_file","Output calibration filename (YML)",cxxopts::value<string>(out_file),"STR" )
+		    ( "h,help", "print help")
+			;
 
-  POpt popt(NULL, argc, argv, options, 0);
-  int c;
-  while((c = popt.getNextOpt()) >= 0) {}
+	  options.parse(argc, argv);
+	  if (options.count("help"))
+	  {
+	    cout << options.help() << endl;
+        exit(0);
+	  }
+	  cxxopts::check_required(options, {"n","u","v","L","R","l","r","o"}); // throws exception if any not present
+  }
+  catch (const cxxopts::OptionException& e)
+  {
+    std::cout << "error parsing options: " << e.what() << std::endl;
+    exit(1);
+  }
 
   FileStorage fsl(leftcalib_file, FileStorage::READ);
   FileStorage fsr(rightcalib_file, FileStorage::READ);
 
   load_image_points(fsl["board_width"], fsl["board_height"], num_imgs, fsl["square_size"],
-                   leftimg_dir, rightimg_dir, leftimg_filename, rightimg_filename);
+                   leftimg_dir.c_str(), rightimg_dir.c_str(), leftimg_filename.c_str(), rightimg_filename.c_str());
 
   printf("Starting Calibration\n");
   Mat K1, K2, R, F, E;
@@ -138,7 +149,9 @@ int main(int argc, char const *argv[])
   printf("Starting Rectification\n");
 
   cv::Mat R1, R2, P1, P2, Q;
-  stereoRectify(K1, D1, K2, D2, img1.size(), R, T, R1, R2, P1, P2, Q);
+  //flag = CV_CALIB_ZERO_DISPARITY;
+  flag = 0; double alpha = -1;
+  stereoRectify(K1, D1, K2, D2, img1.size(), R, T, R1, R2, P1, P2, Q, flag, alpha);
 
   fs1 << "R1" << R1;
   fs1 << "R2" << R2;
